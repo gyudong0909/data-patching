@@ -4,44 +4,62 @@ import { useEffect, useState } from 'react';
 
 import styles from './App.module.css';
 
-type TodoResponse = {
+type Post = {
   body : string;
   id: number;
   title: string;
   userId: number;
 };
 
-
-// 임시 댓글 데이터
-const mockComments = [
-  { id: 1, email: 'dsflj@naber.com', body: '이 글은 정말 흥미롭습니다!이 글은 정말 흥미롭습니다!  이 글은 정말 흥미롭습니다!' },
-  { id: 2, email: 'dksjaf@sdjlfs.com', body: '동의합니다, 좋은 글이네요.' },
-  { id: 3, email: 'dsjl@google.com', body: '이 부분에 대한 설명이 조금 더 필요해요.' },
-];
-
+type Comment = {
+  id: number;
+  email: string;
+  body: string;
+};
 
 
 export const App = () => {
-  const [id, setId] = useState(1);
-  const [data, setData] = useState<TodoResponse>();
-  const n = 100; //임시 설정(버튼개수)
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [selectedId, setSelectedId] = useState<number>();
+  const [comments, setComments] = useState<Comment[]>([]);
 
+  const selectedPost = posts.find((p) => p.id === selectedId) ?? posts.at(0);
 
   useEffect(() => {
     let ignore = false;
 
-    fetch(`https://jsonplaceholder.typicode.com/posts/${id}`)
-      .then((response) => response.json() as Promise<TodoResponse>)
+    fetch(`https://jsonplaceholder.typicode.com/posts`)
+      .then((response) => response.json() as Promise<Post[]>)
       .then((response) => { 
         if (ignore) return;
-        setData(response);
-       }).catch(() => {
+        setPosts(response);
+        if (!(response[0]==null)) {
+          const firstPostId = response[0].id;
+          setSelectedId(firstPostId); 
+          fetchComments(firstPostId); 
+        }
+      })
+      .catch(() => {
         window.alert('데이터를 불러오는데 실패했습니다.')
        });
-       return () => {
+
+      return () => {
         ignore = true;
        };
-  }, [id]);
+  }, []);
+
+  const fetchComments = (postId: number) => {
+    fetch(`https://jsonplaceholder.typicode.com/posts/${postId}/comments`)
+      .then((response) => response.json() as Promise<Comment[]>)
+      .then((response) => {
+        setComments(response);
+      })
+      .catch(() => {
+        window.alert('댓글 데이터를 불러오는데 실패했습니다.');
+      });
+  };
+
+
   
   return (
   <div className={styles.wrapper}>
@@ -50,17 +68,23 @@ export const App = () => {
         포스트 목록
       </div>
       <div>
-        {Array.from({length: n}, (_, index) => (
-          <button key={index}>
-            <span className={styles.number}>
-              {index + 1}.
-            </span>
-            <span className={styles.text}>
-              
-               ~~~~~ !!!!! @!@!@!#@! @!#@!$@ !!@#@!$@!#$!@#$@!$ !!!@#$#@#$ @#$@!#$!@$
-            </span>
-          </button>
-        ))}
+        {posts.length > 0 ?
+        (posts.map((post) => (
+          <button key={post.id} 
+            onClick={() => {
+              setComments([]);
+              setSelectedId(post.id);
+              fetchComments(post.id);
+              }}>
+              <span className={styles.number}>
+                {post.id}.
+              </span>
+              <span className={styles.text}>
+                {post.title}
+              </span>
+          </button>)))
+        : (<p className={styles.text}>로딩중입니다...</p>)
+        }
       </div>
     </div>
     <div className={styles.postContent}>
@@ -68,14 +92,14 @@ export const App = () => {
         내용
       </div>
       <div className={styles.text}>
-        블라블라븝ㄹ라블라 내용이 들어가자~~~~~~~~~~~
-
+        {(selectedPost != null) ? selectedPost.body : '로딩중입니다...'}
       </div>
       <div className={styles.title}>
         댓글
       </div>
       <div className={styles.text}>
-      {mockComments.map((comment) => (
+      {comments.length > 0
+      ?comments.map((comment) => (
         <div key={comment.id}>
           <div className={styles.name}>
             {comment.email}
@@ -84,10 +108,10 @@ export const App = () => {
             {comment.body}
           </div>
         </div>
-      ))}
+      ))
+      : '로딩중입니다....'}
       </div>
     </div>
   </div>
   );
 };
-
