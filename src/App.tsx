@@ -62,7 +62,7 @@ export const App = () => {
     <div className={styles.wrapper}>
       <div className={styles.postList}>
         <div className={styles.title}>포스트 목록</div>
-        <div>
+        <div className={styles.postListContent}>
           {posts.length > 0 ? (
             posts.map((post) => (
               <button
@@ -88,7 +88,7 @@ export const App = () => {
           {selectedPost != null ? selectedPost.body : '로딩중입니다...'}
         </div>
         <div className={styles.title}>댓글</div>
-        <div className={styles.text}>
+        <div className={styles.commentText}>
           {comments.length > 0
             ? comments.map((comment) => (
                 <div key={comment.id}>
